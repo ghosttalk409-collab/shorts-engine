@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shorts approval</title>
+<style>
+  :root { color-scheme: dark; --bg:#0b0f14; --card:#141b23; --line:#233040; --accent:#3ddc97; --muted:#93a3b3; --warn:#ff8b6a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:#eef3f8; font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding:16px 14px 60px; }
+  h1 { font-size:20px; margin:0 0 2px; }
+  h2 { font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:28px 0 10px; }
+  .top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .pill { font-size:13px; padding:6px 12px; border-radius:99px; border:1px solid var(--line); background:var(--card); }
+  .pill.on { color:var(--accent); border-color:var(--accent); }
+  .pill.off { color:var(--warn); border-color:var(--warn); }
+  .grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  video { width:100%; display:block; background:#000; aspect-ratio:9/16; object-fit:cover; }
+  .body { padding:12px; }
+  .hook { font-weight:600; margin:0 0 6px; }
+  .cap { color:var(--muted); font-size:13px; margin:0 0 10px; white-space:pre-wrap; }
+  .row { display:flex; gap:8px; }
+  button { flex:1; font:inherit; font-weight:600; padding:11px 8px; border-radius:10px; border:1px solid var(--line); background:#1c2836; color:#eef3f8; cursor:pointer; }
+  button.good { background:var(--accent); color:#06231a; border-color:var(--accent); }
+  button.bad { background:transparent; color:var(--muted); }
+  button:disabled { opacity:.5; cursor:default; }
+  .muted { color:var(--muted); font-size:13px; }
+  .empty { padding:20px; border:1px dashed var(--line); border-radius:14px; color:var(--muted); text-align:center; }
+  details { margin-top:26px; border-top:1px solid var(--line); padding-top:14px; }
+  input { width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:#0f151c; color:#eef3f8; font:inherit; margin:6px 0 10px; }
+  .toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--accent); color:#06231a; font-weight:600; padding:10px 16px; border-radius:99px; opacity:0; transition:opacity .2s; pointer-events:none; }
+  .toast.show { opacity:1; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  td { padding:7px 4px; border-bottom:1px solid var(--line); }
+  td:last-child { text-align:right; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>Shorts approval</h1>
+    <div class="muted" id="sub">Loading…</div>
+  </div>
+  <div id="switch"></div>
+</div>
+
+<h2>Waiting for you</h2>
+<div id="pending" class="grid"></div>
+
+<h2>Posted</h2>
+<div id="posted"></div>
+
+<details>
+  <summary class="muted">Settings (GitHub connection)</summary>
+  <label class="muted">Repository (owner/name)</label>
+  <input id="repo" placeholder="yourname/shorts-engine" />
+  <label class="muted">Fine-grained token with Contents read+write on that repo</label>
+  <input id="token" type="password" placeholder="github_pat_…" />
+  <button id="save">Save settings</button>
+  <p class="muted">The token stays in this browser only. It is never written into the repo.</p>
+</details>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const LS = { repo: 'se.repo', token: 'se.token' };
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+const b64 = (str) => {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+};
+const unb64 = (s) => {
+  const bin = atob(String(s).replace(/\s/g, ''));
+  return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+};
+
+function settings() {
+  const repo = localStorage.getItem(LS.repo) || '';
+  const token = localStorage.getItem(LS.token) || '';
+  return { repo, token };
+}
+
+async function ghGet(path, repo, token) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
+  });
+  if (!res.ok) throw new Error(`${path}: ${res.status} ${res.statusText}`);
+  const json = await res.json();
+  return { data: JSON.parse(unb64(json.content)), sha: json.sha };
+}
+
+async function ghPut(path, obj, sha, repo, token, message) {
+  const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message, content: b64(JSON.stringify(obj, null, 2) + '\n'), sha }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `${res.status}`);
+  }
+}
+
+function card(item, onDone) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  const vid = item.videoUrl
+    ? `<video src="${item.videoUrl}" controls playsinline preload="metadata"></video>`
+    : `<div class="empty">Video is on GitHub but has no public link yet.<br>Open the run log.</div>`;
+  el.innerHTML = `
+    ${vid}
+    <div class="body">
+      <p class="hook">${escapeHtml(item.hook || '')}</p>
+      <p class="cap">${escapeHtml(item.caption || '')}</p>
+      <div class="row">
+        <button class="good">Approve</button>
+        <button class="bad">Skip</button>
+      </div>
+    </div>`;
+  const [good, bad] = el.querySelectorAll('button');
+  good.onclick = () => onDone('approved', [good, bad]);
+  bad.onclick = () => onDone('skipped', [good, bad]);
+  return el;
+}
+
+const escapeHtml = (s) =>
+  String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+let state = { queue: null, sha: null, config: null, configSha: null };
+
+async function load() {
+  const { repo, token } = settings();
+  if (!repo || !token) {
+    $('sub').textContent = 'Connect your repo in Settings below.';
+    return;
+  }
+  try {
+    const q = await ghGet('content/queue.json', repo, token);
+    state.queue = q.data;
+    state.sha = q.sha;
+    const c = await ghGet('config.json', repo, token);
+    state.config = c.data;
+    state.configSha = c.sha;
+    render();
+  } catch (e) {
+    $('sub').textContent = 'Could not load: ' + e.message;
+  }
+}
+
+function render() {
+  const on = state.config?.enabled !== false;
+  $('sub').textContent = `${state.queue.items.filter((i) => i.status === 'pending').length} waiting · ${on ? 'engine live' : 'engine paused'}`;
+  $('switch').innerHTML = `<button class="pill ${on ? 'on' : 'off'}" id="toggle">${on ? '● Posting on' : '❚❚ Paused'}</button>`;
+  $('toggle').onclick = togglePause;
+
+  const pending = state.queue.items.filter((i) => i.status === 'pending');
+  const wrap = $('pending');
+  wrap.innerHTML = '';
+  if (!pending.length) {
+    wrap.innerHTML = `<div class="empty">Nothing waiting. Tonight's build will add new videos.</div>`;
+  }
+  for (const item of pending) {
+    wrap.appendChild(card(item, (status, buttons) => decide(item, status, buttons)));
+  }
+
+  const posted = state.queue.items.filter((i) => i.status === 'posted').slice(-12).reverse();
+  $('posted').innerHTML = posted.length
+    ? `<table>${posted.map((i) => `<tr><td>${escapeHtml((i.hook || '').slice(0, 42))}</td><td>${i.metrics?.views ?? '—'} views</td></tr>`).join('')}</table>`
+    : `<div class="empty">Nothing posted yet.</div>`;
+}
+
+async function decide(item, status, buttons) {
+  buttons.forEach((b) => (b.disabled = true));
+  const { repo, token } = settings();
+  item.status = status;
+  try {
+    await ghPut('content/queue.json', state.queue, state.sha, repo, token, `approve: ${item.id} → ${status}`);
+    toast(status === 'approved' ? 'Approved. It posts in the next slot.' : 'Skipped.');
+    await load();
+  } catch (e) {
+    buttons.forEach((b) => (b.disabled = false));
+    toast('Failed: ' + e.message);
+  }
+}
+
+async function togglePause() {
+  const { repo, token } = settings();
+  const next = state.config.enabled === false;
+  state.config.enabled = next;
+  try {
+    await ghPut('config.json', state.config, state.configSha, repo, token, next ? 'engine: resume' : 'engine: pause');
+    toast(next ? 'Engine resumed.' : 'Engine paused. Nothing will post.');
+    await load();
+  } catch (e) {
+    state.config.enabled = !next;
+    toast('Failed: ' + e.message);
+  }
+}
+
+$('save').onclick = () => {
+  localStorage.setItem(LS.repo, $('repo').value.trim());
+  localStorage.setItem(LS.token, $('token').value.trim());
+  toast('Saved.');
+  load();
+};
+
+(function boot() {
+  const saved = settings();
+  $('repo').value = saved.repo || (location.hostname.endsWith('github.io')
+    ? location.hostname.split('.')[0] + '/' + location.pathname.split('/')[1]
+    : '');
+  $('token').value = saved.token || '';
+  load();
+})();
+</script>
+</body>
+</html>
