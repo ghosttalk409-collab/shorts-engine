@@ -1,0 +1,16 @@
+{
+  "name": "shorts-engine",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Approve-then-post short video engine for YouTube Shorts, Instagram Reels and Facebook.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "check": "node engine/check.js",
+    "build": "node engine/build.js",
+    "post": "node engine/post.js",
+    "metrics": "node engine/metrics.js",
+    "publish-now": "DRY_RUN=false node engine/post.js"
+  },
+  "dependencies": {}
+}

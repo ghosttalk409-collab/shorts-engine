@@ -1,0 +1,50 @@
+name: 2 · Post approved shorts
+
+on:
+  schedule:
+    - cron: '0 4 * * *'    # 09:30 Asia/Kolkata
+    - cron: '0 14 * * *'   # 19:30 Asia/Kolkata
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shorts-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Kill switch
+        id: guard
+        run: node engine/guard.js
+
+      - name: Publish
+        if: steps.guard.outputs.run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+        run: node engine/post.js
+
+      - name: Save state
+        if: always() && steps.guard.outputs.run == 'true'
+        run: |
+          git config user.name "shorts-bot"
+          git config user.email "shorts-bot@users.noreply.github.com"
+          git add content/ | true
+          git diff --cached --quiet || git commit -m "post: $(date -u +%F_%H%M)"
+          git pull --rebase --autostash || true
+          git push || true

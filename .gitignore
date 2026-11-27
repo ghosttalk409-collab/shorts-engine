@@ -1,0 +1,6 @@
+node_modules/
+content/renders/
+*.log
+.DS_Store
+*.tmp
+.env

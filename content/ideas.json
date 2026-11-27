@@ -1,0 +1,38 @@
+{
+  "_how_to_use": "Edit this any time. 'subjects' fill the {subject} slot in hook templates. 'hooks' are used word-for-word when present. 'body' are the caption lines on the video itself.",
+
+  "default": {
+    "subjects": [
+      "your chat app",
+      "the lock icon",
+      "disappearing messages",
+      "group calls",
+      "your message history"
+    ],
+    "hooks": [],
+    "body": [
+      "Ten seconds, no jargon.",
+      "This is the part nobody shows you.",
+      "Here is the whole thing."
+    ]
+  },
+
+  "ghosttalk": {
+    "subjects": [
+      "your chat app",
+      "the lock icon",
+      "disappearing messages",
+      "your message history"
+    ],
+    "hooks": [
+      "Did you know your chat app can read every message?",
+      "Your messages are not as private as you think.",
+      "If you run a POSH committee, read this first."
+    ],
+    "body": [
+      "Not even the server can read this one.",
+      "The lock icon is the whole point.",
+      "No history kept on the server, by design."
+    ]
+  }
+}

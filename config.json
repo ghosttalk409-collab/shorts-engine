@@ -1,0 +1,53 @@
+{
+  "enabled": true,
+  "timezone": "Asia/Kolkata",
+  "dryRun": true,
+
+  "_comment_enabled": "MASTER KILL SWITCH. false = nothing is ever posted, anywhere. Every job checks this first.",
+  "_comment_dryRun": "true = do everything except the final publish call. Set false when you have posted one video by hand and it worked.",
+
+  "limits": {
+    "candidatesPerNight": 3,
+    "postsPerDay": 2,
+    "maxPostsPerBrandPerDay": 2
+  },
+
+  "style": {
+    "fontFile": "",
+    "hookSeconds": 2.8,
+    "clipSeconds": 5,
+    "endSeconds": 2.6,
+    "kenBurns": true,
+    "bg": "0x0B0F14",
+    "accent": "0x3DDC97",
+    "music": ""
+  },
+
+  "brands": [
+    {
+      "id": "ghosttalk",
+      "name": "Ghost Talk",
+      "enabled": true,
+      "niche": "private encrypted messenger",
+      "hashtags": ["#privacy", "#encrypted", "#messenger", "#india", "#dataprivacy"],
+      "endCard": {
+        "title": "Ghost Talk",
+        "subtitle": "Encrypted chat. Lock icon, group calls. Link in bio."
+      },
+      "platforms": {
+        "youtube": { "enabled": false, "privacyStatus": "public", "categoryId": "28", "playlistId": "" },
+        "instagram": { "enabled": false, "shareToFeed": true },
+        "facebook": { "enabled": false, "apiVersion": "v21.0" }
+      },
+      "env": {
+        "youtube": {
+          "clientId": "YT_CLIENT_ID",
+          "clientSecret": "YT_CLIENT_SECRET",
+          "refreshToken": "YT_REFRESH_TOKEN"
+        },
+        "instagram": { "igUserId": "IG_USER_ID", "token": "IG_ACCESS_TOKEN" },
+        "facebook": { "pageId": "FB_PAGE_ID", "token": "FB_PAGE_TOKEN" }
+      }
+    }
+  ]
+}
