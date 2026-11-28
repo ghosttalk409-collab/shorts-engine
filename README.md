@@ -32,15 +32,24 @@ It is at `github.com/ghosttalk409-collab/shorts-engine`. Everything is already c
 
 Keep it **public** — the video links have to be readable by YouTube and Meta.
 
-### 2. The approval page publishes itself
+### 2. Turn on the approval page (one time, one minute)
 
-The workflow `4 · Publish approval page` deploys it to GitHub Pages on the first run, at:
+1. On the repo page, tap the **Settings** tab at the top (next to **Insights**).
+2. In the left sidebar, under **Code, planning, and automation**, tap **Pages**.
+3. Under **Build and deployment**, find **Source** and choose **Deploy from a branch**.
+4. Two boxes appear. Set **Branch** to **main** and the folder box beside it to **/ui**.
+5. Tap **Save**.
+
+That is all — there is no workflow to run. About a minute later the page is live at:
 
 **https://ghosttalk409-collab.github.io/shorts-engine/**
 
-If that address shows a 404, open **Settings → Pages** and set Source to **GitHub Actions**, then run
-that workflow once from the Actions tab. Bookmark the address. That page is your dashboard:
+A 404 for the first minute is normal; reload. Bookmark it: that page is your dashboard —
 approve, skip, and pause everything.
+
+Do **not** set the Source to "GitHub Actions": that option needs a workflow deploy that GitHub
+blocks for automated pushes, and it is not used here. The page is plain HTML that reads
+`content/queue.json` and `config.json` straight from the repo.
 
 ### 3. Connect the page to your repo
 
