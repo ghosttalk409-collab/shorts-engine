@@ -1,0 +1,6 @@
+Drop photos and short clips into this folder.
+
+On a phone: open this folder on github.com, tap "Add file" then "Upload files".
+
+Photos: JPG or PNG. Keep each file under about 30 MB.
+Videos longer than a minute are cut into reusable 6-second pieces automatically.

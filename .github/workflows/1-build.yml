@@ -21,6 +21,14 @@ jobs:
         with:
           node-version: 20
 
+      # ubuntu-latest no longer ships ffmpeg, so install a full build (with drawtext).
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends ffmpeg
+          ffmpeg -version | head -1
+          ffmpeg -hide_banner -filters 2>/dev/null | grep -q drawtext && echo "drawtext available"
+
       - name: Kill switch
         id: guard
         run: node engine/guard.js
@@ -31,6 +39,8 @@ jobs:
 
       - name: Environment check
         if: steps.guard.outputs.run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node engine/check.js
         continue-on-error: true
 
