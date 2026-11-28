@@ -104,6 +104,25 @@ async function textFile(dir, name, text) {
   return file;
 }
 
+/**
+ * Line advance, in pixels, for one line of text. Some ffmpeg builds draw a box glyph
+ * where a line break sits inside a textfile, so every line is drawn on its own and
+ * stacked here. The ratios come from the two fonts the engine downloads.
+ */
+const FONT_LINE_HEIGHT = { display: 1.5, text: 1.146 };
+const linePitch = (kind, size, spacing = 0) =>
+  Math.round(size * (FONT_LINE_HEIGHT[kind] || 1.3)) + spacing;
+
+async function textLines({ dir, name, font, size, color, x, y, pitch, lines }) {
+  const list = (Array.isArray(lines) ? lines : String(lines ?? '').split('\n')).filter((l) => l.trim());
+  const filters = [];
+  for (let i = 0; i < list.length; i++) {
+    const file = await textFile(dir, `${name}-${i}`, list[i]);
+    filters.push(drawtext({ file, font, size, color, x, y: y + Math.round(i * pitch) }));
+  }
+  return filters;
+}
+
 function drawtext({ file, font, size, color, x, y, lineSpacing = 14 }) {
   const fontPart = font ? `fontfile='${font}'` : 'font=Sans';
   return [
@@ -120,10 +139,10 @@ function drawtext({ file, font, size, color, x, y, lineSpacing = 14 }) {
 
 const vfChain = (parts) => parts.filter(Boolean).join(',');
 
-async function cardScene({ out, dir, seconds, style, font, lines, label }) {
+async function cardScene({ out, dir, seconds, style, font, fontKind = 'display', lines, label }) {
   const W = style.w;
   const H = style.h;
-  const hookFile = await textFile(dir, `card-${path.basename(out, '.mp4')}`, lines);
+  const name = `card-${path.basename(out, '.mp4')}`;
   const labelFile = label ? await textFile(dir, `label-${path.basename(out, '.mp4')}`, label) : null;
 
   const filters = [
@@ -131,7 +150,17 @@ async function cardScene({ out, dir, seconds, style, font, lines, label }) {
     labelFile
       ? drawtext({ file: labelFile, font, size: 34, color: style.muted, x: 90, y: Math.round(H * 0.16) })
       : null,
-    drawtext({ file: hookFile, font, size: 66, color: style.textColor, x: 90, y: Math.round(H * 0.34), lineSpacing: 2 }),
+    ...(await textLines({
+      dir,
+      name,
+      font,
+      size: 66,
+      color: style.textColor,
+      x: 90,
+      y: Math.round(H * 0.34),
+      pitch: linePitch(fontKind, 66, fontKind === 'display' ? 2 : 14),
+      lines,
+    })),
     `fade=t=in:st=0:d=0.25`,
     `fade=t=out:st=${Math.max(0, seconds - 0.25).toFixed(2)}:d=0.25`,
   ];
@@ -150,7 +179,7 @@ async function cardScene({ out, dir, seconds, style, font, lines, label }) {
 async function visualScene({ out, dir, file, seconds, style, font, caption, startAt = 0 }) {
   const W = style.w;
   const H = style.h;
-  const capFile = await textFile(dir, `cap-${path.basename(out, '.mp4')}`, caption || '');
+  const capName = `cap-${path.basename(out, '.mp4')}`;
 
   const input = isImage(file)
     ? ['-loop', '1', '-framerate', '30', '-t', String(seconds), '-i', file]
@@ -175,9 +204,19 @@ async function visualScene({ out, dir, file, seconds, style, font, caption, star
   const filters = [
     base,
     `drawbox=x=0:y=${Math.round(H * 0.56)}:w=${W}:h=${Math.round(H * 0.22)}:color=black@0.55:t=fill`,
-    caption
-      ? drawtext({ file: capFile, font, size: 48, color: style.textColor, x: 70, y: Math.round(H * 0.59), lineSpacing: 4 })
-      : null,
+    ...(caption
+      ? await textLines({
+          dir,
+          name: capName,
+          font,
+          size: 48,
+          color: style.textColor,
+          x: 70,
+          y: Math.round(H * 0.59),
+          pitch: linePitch('text', 48, 4),
+          lines: caption,
+        })
+      : []),
     `fade=t=in:st=0:d=0.25`,
     `fade=t=out:st=${Math.max(0, seconds - 0.25).toFixed(2)}:d=0.25`,
   ];
@@ -220,7 +259,7 @@ export async function renderVideo({ spec, style, assets = [], outFile, workDir }
   const fonts = await resolveFonts(S);
   const scenes = [];
 
-  const hookText = wrap(String(spec.hook).toUpperCase(), 17).join('\n');
+  const hookText = wrap(String(spec.hook).toUpperCase(), 17);
   const hookScene = path.join(tmp, 's1-hook.mp4');
   await cardScene({
     out: hookScene,
@@ -228,6 +267,7 @@ export async function renderVideo({ spec, style, assets = [], outFile, workDir }
     seconds: S.hookSeconds,
     style: S,
     font: fonts.display,
+    fontKind: 'display',
     lines: hookText,
     label: spec.brandName ? spec.brandName.toUpperCase() : null,
   });
@@ -259,21 +299,24 @@ export async function renderVideo({ spec, style, assets = [], outFile, workDir }
       seconds: Math.max(4, S.clipSeconds),
       style: S,
       font: fonts.text,
-      lines: wrap(bodyLines[0] || spec.hook, 22).join('\n'),
+      lines: wrap(bodyLines[0] || spec.hook, 22),
+      fontKind: 'text',
       label: null,
     });
     scenes.push(scene);
   }
 
   const endScene = path.join(tmp, 's3-end.mp4');
-  const endLines = `${spec.endCard?.title || spec.brandName || ''}\n${spec.endCard?.subtitle || ''}`.trim();
+  // Title on its own line, subtitle wrapped underneath.
+  const endLines = [spec.endCard?.title || spec.brandName || '', ...wrap(spec.endCard?.subtitle || '', 24)];
   await cardScene({
     out: endScene,
     dir: tmp,
     seconds: S.endSeconds,
     style: S,
     font: fonts.text,
-    lines: wrap(endLines, 24).join('\n'),
+    fontKind: 'text',
+    lines: endLines,
     label: null,
   });
   scenes.push(endScene);
