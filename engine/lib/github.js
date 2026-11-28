@@ -67,10 +67,12 @@ export async function uploadRender(file, tag, name) {
   }
   const release = (await findRelease(tag)) || (await createRelease(tag));
 
+  // A rebuilt candidate must replace the file with the same name, otherwise the queue
+  // keeps pointing at the old video.
   const existing = (release.assets || []).find((a) => a.name === name);
   if (existing) {
-    log(`asset exists: ${name}`);
-    return existing.browser_download_url;
+    await gh(`${API}/repos/${repo()}/releases/assets/${existing.id}`, { method: 'DELETE' }).catch(() => {});
+    log(`replacing asset: ${name}`);
   }
 
   const data = await fs.readFile(file);
