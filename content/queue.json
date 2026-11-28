@@ -1,4 +1,95 @@
 {
   "version": 1,
-  "items": []
+  "items": [
+    {
+      "id": "ghosttalk-20261128-1",
+      "brand": "ghosttalk",
+      "status": "pending",
+      "createdAt": "2026-11-28T08:39:20.273Z",
+      "day": "2026-11-28",
+      "template": "handwritten",
+      "hook": "Did you know your chat app can read every message?",
+      "body": [
+        "Not even the server can read this one.",
+        "The lock icon is the whole point.",
+        "No history kept on the server, by design.",
+        "Ten seconds, no jargon.",
+        "This is the part nobody shows you.",
+        "Here is the whole thing."
+      ],
+      "caption": "Did you know your chat app can read every message? Ghost Talk — Encrypted chat. Lock icon, group calls. Link in bio. Comment \"how\" and I will send it.",
+      "hashtags": [
+        "#privacy",
+        "#encrypted",
+        "#messenger",
+        "#india",
+        "#dataprivacy"
+      ],
+      "file": "content/renders/ghosttalk-20261128-1.mp4",
+      "videoUrl": "https://github.com/ghosttalk409-collab/shorts-engine/releases/download/renders-20261128/ghosttalk-20261128-1.mp4",
+      "sources": [],
+      "results": {},
+      "attempts": 0
+    },
+    {
+      "id": "ghosttalk-20261128-2",
+      "brand": "ghosttalk",
+      "status": "pending",
+      "createdAt": "2026-11-28T08:39:22.362Z",
+      "day": "2026-11-28",
+      "template": "handwritten",
+      "hook": "Your messages are not as private as you think.",
+      "body": [
+        "Not even the server can read this one.",
+        "The lock icon is the whole point.",
+        "No history kept on the server, by design.",
+        "Ten seconds, no jargon.",
+        "This is the part nobody shows you.",
+        "Here is the whole thing."
+      ],
+      "caption": "Your messages are not as private as you think. Ghost Talk — Encrypted chat. Lock icon, group calls. Link in bio. Try it once and tell me what you think.",
+      "hashtags": [
+        "#privacy",
+        "#encrypted",
+        "#messenger",
+        "#india",
+        "#dataprivacy"
+      ],
+      "file": "content/renders/ghosttalk-20261128-2.mp4",
+      "videoUrl": "https://github.com/ghosttalk409-collab/shorts-engine/releases/download/renders-20261128/ghosttalk-20261128-2.mp4",
+      "sources": [],
+      "results": {},
+      "attempts": 0
+    },
+    {
+      "id": "ghosttalk-20261128-3",
+      "brand": "ghosttalk",
+      "status": "pending",
+      "createdAt": "2026-11-28T08:39:24.451Z",
+      "day": "2026-11-28",
+      "template": "handwritten",
+      "hook": "If you run a POSH committee, read this first.",
+      "body": [
+        "Not even the server can read this one.",
+        "The lock icon is the whole point.",
+        "No history kept on the server, by design.",
+        "Ten seconds, no jargon.",
+        "This is the part nobody shows you.",
+        "Here is the whole thing."
+      ],
+      "caption": "If you run a POSH committee, read this first. Ghost Talk — Encrypted chat. Lock icon, group calls. Link in bio. Comment \"how\" and I will send it.",
+      "hashtags": [
+        "#privacy",
+        "#encrypted",
+        "#messenger",
+        "#india",
+        "#dataprivacy"
+      ],
+      "file": "content/renders/ghosttalk-20261128-3.mp4",
+      "videoUrl": "https://github.com/ghosttalk409-collab/shorts-engine/releases/download/renders-20261128/ghosttalk-20261128-3.mp4",
+      "sources": [],
+      "results": {},
+      "attempts": 0
+    }
+  ]
 }
